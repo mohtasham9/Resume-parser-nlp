@@ -1,4 +1,4 @@
-![Normal_User](https://github.com/mohtasham9/Resume-parser-nlp/assets/77109645/afe91d6a-b979-4c2d-b0f9-ab9fc3cdbefe)# **Use Case: Resume Parser for Extracting User Information**
+# **Use Case: Resume Parser for Extracting User Information**
 
 ### **Business Problem**:
 Hiring processes involve sorting through numerous resumes to identify the most suitable candidates, a time-consuming and error-prone task. Manually analyzing resumes can result in overlooking important qualifications and skills. Organizations require an efficient solution to automate and enhance the resume analysis process while extracting valuable insights from the data.
