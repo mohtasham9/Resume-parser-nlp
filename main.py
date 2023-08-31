@@ -4,6 +4,19 @@ import spacy
 nltk.download('stopwords')
 spacy.load('en_core_web_sm')
 
+import os
+import openai
+from langchain.chat_models import ChatOpenAI
+from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.vectorstores import FAISS, Pinecone
+from langchain.prompts.prompt import PromptTemplate
+from langchain.chains import RetrievalQA
+from langchain.llms import OpenAI
+from llama_index import SQLDatabase,ServiceContext
+from llama_index.llms import OpenAI
+from sqlalchemy import select, create_engine, MetaData, Table,inspect
+from llama_index.indices.struct_store.sql_query import NLSQLTableQueryEngine
+from IPython.display import Markdown, display
 import pandas as pd
 import base64, random
 import time, datetime
@@ -17,10 +30,86 @@ import io, random
 from streamlit_tags import st_tags
 from PIL import Image
 import pymysql
-from Courses import ds_course, web_course, android_course, ios_course, uiux_course, resume_videos, interview_videos
 import pafy
 import plotly.express as px
+from dotenv import load_dotenv
+load_dotenv()
 
+
+openai.api_key = os.environ.get('OPENAI_API_KEY')
+
+db_user = "root"
+db_password = "admin" #Enter you password database password here
+db_host = "localhost"  
+db_name = "sra" #name of the database
+db_port = "3306" #specify your port here
+connection_uri = f"mysql+pymysql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+
+connection = pymysql.connect(host='localhost', user='root', password='admin')
+cursor = connection.cursor()
+
+TEMPLATE = """ You are an expert SQL developer querying about User details. You have to write sql code in a SQL database based on a users question.
+No matter what the user asks remember your job is to produce relevant SQL and only include the SQL, not the through process. So if a user asks to display something, you still should just produce SQL.
+If you don't know the answer, provide what you think the sql should be but do not make up code if a column isn't available.
+
+ 
+As an example, a user will ask "Display the last 5 Users with Name Mathew?" The SQL to generate this would be:
+
+ 
+select * from sra.user_data where Name = "Mathew"
+limit 5;
+
+ 
+Questions about User details fields should query sra.user_data
+sra.user_data consists of Name, Email_ID, Timestamp and Actual_skills
+
+ 
+Question: {question}
+Context: {context}
+ 
+SQL: ```sql ``` \n
+
+"""
+PROMPT = PromptTemplate(input_variables=["question", "context"], template=TEMPLATE, )
+
+llm = ChatOpenAI(
+    model_name="gpt-3.5-turbo",
+    temperature=0.1,
+    max_tokens=1000, 
+    openai_api_key=openai.api_key
+)
+
+
+def get_faiss():
+    " get the loaded FAISS embeddings"
+    embeddings = OpenAIEmbeddings(openai_api_key=openai.api_key)
+    return FAISS.load_local("faiss_index", embeddings)
+
+def fs_chain(question):
+    """
+    returns a question answer chain for faiss vectordb
+    """
+
+    docsearch = get_faiss()
+    qa_chain = RetrievalQA.from_chain_type(llm, 
+                                           retriever=docsearch.as_retriever(),
+                                           chain_type_kwargs={"prompt": PROMPT})
+    return qa_chain({"query": question})
+
+def fs_chain1(str_input):
+    """
+    performs qa capability for a question using sql vector db store
+    the prompts.fs_chain is used but with caching
+    """
+    output = fs_chain(str_input)
+    return output
+
+# adding this to test out caching
+@st.cache_data(ttl=86400)
+def sf_query(str_input):
+    cursor.execute(str_input)
+    data = cursor.fetchall()
+    return data
 
 def get_table_download_link(df, filename, text):
     """Generates a link allowing the data in a given panda dataframe to be downloaded
@@ -60,9 +149,6 @@ def show_pdf(file_path):
     pdf_display = F'<iframe src="data:application/pdf;base64,{base64_pdf}" width="700" height="1000" type="application/pdf"></iframe>'
     st.markdown(pdf_display, unsafe_allow_html=True)
 
-
-connection = pymysql.connect(host='localhost', user='root', password='admin')
-cursor = connection.cursor()
 
 
 def insert_data(name, email, timestamp, no_of_pages, skills):
@@ -147,25 +233,36 @@ def run():
         ## Admin Side
         st.success('Welcome to Admin Side')
         # st.sidebar.subheader('**ID / Password Required!**')
+        # Display Data
+        cursor.execute('''SELECT*FROM user_data''')
+        data = cursor.fetchall()
+        st.header("**User's👨‍💻 Data**")
+        df = pd.DataFrame(data, columns=['ID', 'Name', 'Email', 'Timestamp', 'Total Page', 'Actual Skills'])
+        st.dataframe(df)
+        st.markdown(get_table_download_link(df, 'User_Data.csv', 'Download Report'), unsafe_allow_html=True)
+        # Chat input field
+        # st.header("**ChatBot Assistant**")
+        # chat_input = st.text_area("Enter your query:", "")
 
-        ad_user = st.text_input("Username")
-        ad_password = st.text_input("Password", type='password')
-        if st.button('Login'):
-            if ad_user == 'cradmin' and ad_password == 'criticalriver':
-                st.success("Welcome User")
-                # Display Data
-                cursor.execute('''SELECT*FROM user_data''')
-                data = cursor.fetchall()
-                st.header("**User's👨‍💻 Data**")
-                df = pd.DataFrame(data, columns=['ID', 'Name', 'Email', 'Timestamp', 'Total Page', 'Actual Skills'])
-                st.dataframe(df)
-                st.markdown(get_table_download_link(df, 'User_Data.csv', 'Download Report'), unsafe_allow_html=True)
-                ## Admin Side Data
-                query = 'select * from user_data;'
-                #plot_data = pd.read_sql(query, connection)
+        str_input = st.text_input(label='What would you like to answer? (e.g. How many candidates with skills java and C++?)')
 
-            else:
-                st.error("Wrong ID & Password Provided")
-
-
+        if len(str_input) > 1:
+            with st.spinner('Looking up your question in Database now...'):
+                try:
+                    output = fs_chain1(str_input)
+                    #st.write(output)
+                    try:
+                        # if the output doesn't work we will try one additional attempt to fix it
+                        query_result = sf_query(output['result'])
+                        if len(query_result) > 1:
+                            st.write(query_result)
+                            st.write(output)
+                        else:
+                            st.write("No query result found.")
+                    except Exception as ex:
+                        st.write("An error occurred while querying the database.")
+                        st.write(str(ex))
+                except Exception as ex:
+                    st.write("An error occurred while processing your query.")
+                    st.write(str(ex))         
 run()
