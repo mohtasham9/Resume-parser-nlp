@@ -54,5 +54,27 @@ Below is the Demo of the **Admin User** Section.
 
 ![Untitled (2)](https://github.com/mohtasham9/Resume-parser-nlp/assets/77109645/f6691321-0643-4818-9ef4-9446b8c3b9ba)
 
+### **Run Application**
+
+To use this application, you must create an API Key with Open AI and pass it as an env variable. The steps are mentioned below:
+
+1. Create a file named '.env' in the project root directory
+2. Paste the following list of key-value pairs as mentioned below and save the file.
+
+       OPENAI_API_KEY = "replace-with-your-open-ai-ai-key"
+    
+3. In your terminal, create a virtual environment and install requirements from the requirements file by running following command.
+
+   `python -m pip install -r requirements.txt --no-cache`
+4. Run following command from the project root directory to launch the streamlit application.
+
+   `streamlit run main.py`
+5. Browse `http://<IP_ADDRESS>:8501/` to see the application.
+6. Optionally, you can build a docker image and deploy as a container after step 2.
+7. To build, docker image, execute following in the project root directory.
+
+    `docker build -t resume_parser:Dockerfile .`
+8. To run, the container, execute the command: `docker run -d -p 80:8501 resume_parser:Dockerfile`
+
 ### **Conclusion**:
 The use of resume parsing technology powered by PyResparser and PDFMiner presents a transformative solution to the time-consuming and error-prone process of manual resume screening. By automating the extraction of user information and converting PDFs into text format, organizations can significantly enhance their hiring processes, leading to better candidate matching, reduced bias, and strategic insights into the job market. This technology empowers HR teams, recruitment agencies, and job platforms to streamline their operations and make more informed decisions.
