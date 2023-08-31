@@ -1,4 +1,4 @@
-# **Use Case: Resume Parser for Extracting User Information**
+![Normal_User](https://github.com/mohtasham9/Resume-parser-nlp/assets/77109645/afe91d6a-b979-4c2d-b0f9-ab9fc3cdbefe)# **Use Case: Resume Parser for Extracting User Information**
 
 ### **Business Problem**:
 Hiring processes involve sorting through numerous resumes to identify the most suitable candidates, a time-consuming and error-prone task. Manually analyzing resumes can result in overlooking important qualifications and skills. Organizations require an efficient solution to automate and enhance the resume analysis process while extracting valuable insights from the data.
@@ -28,7 +28,7 @@ The data primarily consists of resume documents in PDF format. The extracted tex
 
 
 ### **High Level Diagram:**
-![HLD.png](/.attachments/HLD-3420b206-3b9a-46ef-be02-008c5630a70e.png)
+![HLD](https://github.com/mohtasham9/Resume-parser-nlp/assets/77109645/1569129a-15ee-4c43-8d3b-735d1cad8c74)
 
 - Resumes are uploaded to the application.
 - Using **pdfMiner** to convert the pdf to text. Then with the help of the **PyResparser** NLP library, we are extracting the information. Such as Name, Email_id, Contact No., and Skill Set.
@@ -45,7 +45,7 @@ Below is the Demo of the **Normal User** Section.
 - User can view the uploaded resume and the extracted information such as Name, Contact No., Email id, No. of Resume Page, and Skills.
 - All the relevant information is then stored in the SQL Database.
     
-![Untitled.gif](/.attachments/Untitled-4feabd0d-2511-4508-9ff7-f853a4f53965.gif)
+![Normal_User](https://github.com/mohtasham9/Resume-parser-nlp/assets/77109645/12c10150-6141-4563-9b51-27dde4228617)
 
 Below is the Demo of the **Admin User** Section.
 - The user will be prompted to enter the admin username and password.
