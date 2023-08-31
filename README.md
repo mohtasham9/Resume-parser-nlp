@@ -1,54 +1,58 @@
-# Smart Resume Analyser App
+# **Use Case: Resume Parser for Extracting User Information**
 
-[![forthebadge made-with-python](http://ForTheBadge.com/images/badges/made-with-python.svg)](https://www.python.org/)                 
-[![Python 3.6](https://img.shields.io/badge/python-3.6-blue.svg)](https://www.python.org/downloads/release/python-360/)   
+### **Business Problem**:
+Hiring processes involve sorting through numerous resumes to identify the most suitable candidates, a time-consuming and error-prone task. Manually analyzing resumes can result in overlooking important qualifications and skills. Organizations require an efficient solution to automate and enhance the resume analysis process while extracting valuable insights from the data.
 
-## [Watch Tutorial for this project](https://youtu.be/hqu5EYMLCUw)
-<img src="https://github.com/Spidy20/Smart_Resume_Analyser_App/blob/master/yt_thumb.jpg">
+### **Solution**:
+The use of a resume parser, employing technologies like PyResparser and PDFMiner, offers a transformative solution to this challenge. PyResparser is utilized to extract user information from resumes, while PDFMiner aids in converting resume PDFs into text format, facilitating further analysis.
 
-## [Get the project Report, PPT, and Diagrams](https://kushalbhavsar1820.stores.instamojo.com/product/864991/smart-resume-analyzer-ppt-report-and-diagram-c091f/)
-## Source
-- Extracting user's information from the Resume, I used [PyResparser](https://omkarpathak.in/pyresparser/)
-- Extracting Resume PDF into Text, I used [PDFMiner](https://pypi.org/project/pdfminer/).
+### **Potential Users:**
+**Human Resources Teams**: HR departments of companies can use the resume parser to streamline and expedite the resume screening process, ensuring the identification of the most qualified candidates.
+**Recruitment Agencies**: Recruitment agencies can use the technology to efficiently match candidates with job opportunities, enhancing their service quality.
+**Job Boards and Career Websites**: Platforms hosting job listings can incorporate resume parsing to help candidates submit their information more conveniently and accurately.
 
-## Features
-- User's & Admin Section
-- Resume Score
-- Career Recommendations
-- Resume writing Tips suggestions
-- Courses Recommendations
-- Skills Recommendations
-- Youtube video recommendations
+### **Potential Impact:**
+**Time and Resource Saving**s: Resume parsing reduces the time and resources required for manual screening, allowing recruiters to focus on higher-value tasks.
+**Enhanced Efficiency**: Automation ensures thorough analysis of numerous resumes simultaneously, reducing the chances of overlooking crucial qualifications.
+**Improved Candidate Matching**: Accurate extraction of skills and qualifications enhances the matching process, leading to the identification of better-fit candidates.
+**Reduced Bias**: The use of technology minimizes human bias in screening, leading to a fair assessment of candidates based on their qualifications.
+**Strategic Insights**: Analyzing trends in skills and experiences provides insights into the job market, helping organizations refine their hiring strategies.
 
-## Usage
-- Clone my repository.
-- Open CMD in working directory.
-- Run following command.
-  ```
-  pip install -r requirements.txt
-  ```
-- `App.py` is the main Python file of Streamlit Web-Application. 
-- `Courses.py` is the Python file that contains courses and youtube video links.
-- Download XAMP or any other control panel, and turn on the Apache & SQL service.
-- To run app, write following command in CMD. or use any IDE.
-  ```
-  streamlit run App.py
-  ```
-- `Uploaded_Resumes` folder is contaning the user's uploaded resumes.
-- `Classifier.py` is the main file which is containing a KNN Algorithm.
-- For more explanation of this project see the tutorial on Machine Learning Hub YouTube channel.
-- Admin side credentials is `machine_learning_hub` and password is `mlhub123`. 
+### **Data:**
+The data primarily consists of resume documents in PDF format. The extracted text serves as the input for analysis. The data may include personal information, contact details, work experience, education history, skills, and more.
 
-## Screenshots
-
-## User side
-<img src="https://github.com/Spidy20/Smart_Resume_Analyser_App/blob/master/sc1.png">
-
-## Admin Side
-<img src="https://github.com/Spidy20/Smart_Resume_Analyser_App/blob/master/sc2.png">
+### **Approach:**
+**PDF to Text Conversion**: PDFMiner is employed to convert resume PDFs into text format, making the data accessible for further analysis.
+**Information Extraction**: PyResparser is used to extract user information, such as name, contact details, work experience, education, and skills, from the parsed text.
+**Data Storage and Analysis**: The extracted information is stored in a structured format, allowing for easy querying and analysis.
 
 
-## Just follow☝️ me and Star⭐ my repository 
+### **High Level Diagram:**
+![HLD.png](/.attachments/HLD-3420b206-3b9a-46ef-be02-008c5630a70e.png)
 
-# [Buy me a Coffee☕](https://www.buymeacoffee.com/spidy20)
-## [Donate me on PayPal(It will inspire me to do more projects)](https://www.paypal.me/spidy1820)
+- Resumes are uploaded to the application.
+- Using **pdfMiner** to convert the pdf to text. Then with the help of the **PyResparser** NLP library, we are extracting the information. Such as Name, Email_id, Contact No., and Skill Set.
+- Then we store the data in the **SQL** database. 
+- We user passes a query to the application it gets embedded and then passed to the LLM to generate a SQL query.
+- Generated SQL query then is used to fetch the data from the SQL and with the query it is passed on to the LLM to generate a response to the user query. 
+
+
+### **Demo**
+In the application, we have two user modes: Normal User and Admin Section. 
+Below is the Demo of the **Normal User** Section. 
+- In the Normal user section user will upload the Resume from the local drive using the choose your resume option. By dragging or using the browse file option. 
+- Once the user has uploaded the resume the application will use NLP techniques to extract the basic personal information and the skill set of the user.
+- User can view the uploaded resume and the extracted information such as Name, Contact No., Email id, No. of Resume Page, and Skills.
+- All the relevant information is then stored in the SQL Database.
+    
+![Untitled.gif](/.attachments/Untitled-4feabd0d-2511-4508-9ff7-f853a4f53965.gif)
+
+Below is the Demo of the **Admin User** Section.
+- The user will be prompted to enter the admin username and password.
+- Once the user is validated user can view all the resumes uploaded into the application with date and time. 
+- It will also show each resume's extracted information in a tabular format. 
+
+![Untitled (2)](https://github.com/mohtasham9/Resume-parser-nlp/assets/77109645/f6691321-0643-4818-9ef4-9446b8c3b9ba)
+
+### **Conclusion**:
+The use of resume parsing technology powered by PyResparser and PDFMiner presents a transformative solution to the time-consuming and error-prone process of manual resume screening. By automating the extraction of user information and converting PDFs into text format, organizations can significantly enhance their hiring processes, leading to better candidate matching, reduced bias, and strategic insights into the job market. This technology empowers HR teams, recruitment agencies, and job platforms to streamline their operations and make more informed decisions.
