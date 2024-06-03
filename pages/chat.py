@@ -4,9 +4,6 @@ import boto3
 import botocore
 import openai
 import pandas as pd
-from dataclasses import dataclass
-from typing import Literal
-from langchain.callbacks import get_openai_callback
 from langchain.chat_models import ChatOpenAI
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import FAISS
@@ -16,8 +13,6 @@ from botocore.client import Config
 import create_db_embedding
 from helper import generate_sql_sentence,generate_chat_response
 from load_environment import load_environment
-from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, DataReturnMode, JsCode
-from st_aggrid.grid_options_builder import GridOptionsBuilder
 
 
 openai.api_key, aws_access_key_id, aws_secret_access_key, db_config = load_environment()
@@ -86,19 +81,29 @@ s3 = boto3.client('s3', config=Config(signature_version='s3v4'), region_name='ap
 
 
 def show_chat_page():
-    st.subheader("ChatBot")
-    expander = st.expander("See explanation")
+    st.subheader("ChatBot", divider="blue")
+    expander = st.expander(":information_source:  :blue[**About**]")
     expander.info("""
-            ### About:
-            - This section is for the internal user who wants to query about a candidate.
-            - User can have a conventional chat. 
-            ### Sample Prompts:
-            - ​Give Name, Email of candidates who lives in San Francisco.
-            - List the data engineers with 2+ years of experience.
-            - How can I contact Jennifer?
-            - How many candidates are from Boston?
+        Welcome to our ChatBot, your AI-powered assistant for querying candidate information from our database. Here's what you can do with this ChatBot:
+
+        - **Ask Questions**: You can have a natural language conversation with the ChatBot to query candidate details from our database. Simply ask questions, and the ChatBot will generate SQL queries to fetch the information you need.
+
+        - **Example Prompts**: To get you started, here are some sample prompts:
+            - "Give me the Name and Email of candidates who live in San Francisco in table."
+            - "List the data engineers with 2+ years of experience in table."
+            - "How can I contact Jennifer?"
+            - "How many candidates are from Boston?"
+
+        - **Retrieve Candidate Details**: The ChatBot will provide you with relevant candidate information based on your queries.
+
+        - **View Table Data**: If you want to display a table of results, you have to ask the chatbot to show the results in a table
+
+        Please keep in mind that this ChatBot is here to help you efficiently retrieve candidate information. If you have any questions or need further assistance, don't hesitate to ask.
+
+        Thank you for using our ChatBot!
     """
     )
+
 
     #Connect to the MySQL database
     connection = pymysql.connect(**db_config)
@@ -106,122 +111,9 @@ def show_chat_page():
     
     cursor.execute('''SELECT CandidateID as 'Candidate ID',Name,ContactNumber as 'Contact Number',EmailID as 'Email ID',Location,JobTitle as 'Job Title',TimeStamp as 'Time Stamp' FROM cr.PersonalInformation''')
     data = cursor.fetchall()
-    st.markdown (''' # Candidates Details ''')
+    #st.markdown (''' # Candidates Details ''')
     df = pd.DataFrame(data, columns=['Candidate ID', 'Name', 'Contact Number', 'Email ID', 'Location', 'Job Title', 'Time Stamp'])
-
-    @st.cache_data
-    def generate_download_links(df):
-        def generate_link(row):
-            candidateid = row['Candidate ID']
-            candidatename=row['Name']
-            pdf_file_name = f"cr-resumegpt/{candidateid}_{candidatename}.pdf"
-            pdf_file_url = s3.generate_presigned_url('get_object', Params={'Bucket': 'cr-resumegpt', 'Key': pdf_file_name}, ExpiresIn=3600)
-            return pdf_file_url
-        return df.apply(generate_link, axis=1)
-
-    # Generate download links and add the 'Resume' column to the DataFrame
-    df['Resume'] = generate_download_links(df)
-
-    gd=GridOptionsBuilder.from_dataframe(df)
-    gd.configure_column("Resume",
-        cellRenderer=JsCode("""
-                    class UrlCellRenderer {
-                    init(params) {
-                        this.eGui = document.createElement('a');
-                        this.eGui.innerText = 'Download';
-                        this.eGui.setAttribute('href', params.value);
-                        this.eGui.setAttribute('style', "text-decoration:none");
-                        this.eGui.setAttribute('target', "_blank");
-                    }
-                    getGui() {
-                        return this.eGui;
-                    }
-                    }
-                """)
-    )
-    gd.configure_pagination(enabled=True, paginationAutoPageSize=True)
-    gd.configure_side_bar()
-    gridoptions = gd.build()
-    AgGrid(df, gridOptions=gridoptions,
-        allow_unsafe_jscode=True,
-        enable_enterprise_modules=True,
-        update_mode=GridUpdateMode.SELECTION_CHANGED,
-        data_return_mode=DataReturnMode.FILTERED_AND_SORTED,
-        height=500,
-        custom_css={
-                    "#gridToolBar": {
-                        "padding-bottom": "0px !important",
-                    }
-                },
-        fit_columns_on_grid_load=True)
-    @dataclass
-    class Message:
-        """Class for keeping track of a chat message."""
-        origin: Literal["human", "ai"]
-        message: str
-
-    def load_css():
-        with open("static/styles.css", "r") as f:
-            css = f"<style>{f.read()}</style>"
-            st.markdown(css, unsafe_allow_html=True)
-
-    def initialize_session_state():
-        if "history" not in st.session_state:
-            st.session_state.history = []
-
-    def on_click_callback():
-        with get_openai_callback() as cb:
-            human_prompt = st.session_state.human_prompt
-            str_input = human_prompt
-            generative_response1 = fs_chain1(str_input)
-            llm_response = generative_response1
-            st.session_state.history.append(
-                Message("human", human_prompt)
-            )
-            st.session_state.history.append(
-                Message("ai", llm_response)
-            )
-    
-    load_css()
-    initialize_session_state()
-
-    chat_placeholder = st.container()
-    prompt_placeholder = st.form("chat-form")
-
-    with chat_placeholder:
-        for chat in st.session_state.history:
-            div = f"""
-                    <div class="chat-row 
-                        {'' if chat.origin == 'ai' else 'row-reverse'}">
-                        <img class="chat-icon" src="app/static/{
-                            'ai_icon.png' if chat.origin == 'ai' 
-                                        else 'user_icon.png'}"
-                            width=32 height=32>
-                        <div class="chat-bubble
-                        {'ai-bubble' if chat.origin == 'ai' else 'human-bubble'}">
-                            &#8203;{chat.message}
-                        </div>
-                    </div>
-                        """
-            st.markdown(div, unsafe_allow_html=True)
-        
-        for _ in range(3):
-            st.markdown("")
-    
-    with prompt_placeholder:
-        st.markdown("**Enter Your Query**")
-        cols = st.columns((6, 1))
-        cols[0].text_input(
-            "Chat",
-            label_visibility="collapsed",
-            key="human_prompt",
-        )
-        cols[1].form_submit_button(
-            "Submit", 
-            type="primary", 
-            on_click=on_click_callback, 
-        )
-
+ 
     api=openai.api_key
     create_db_embedding.create_embeddings(api)
 
@@ -258,6 +150,7 @@ def show_chat_page():
         Returns both SQL query result and generative response.
         """
         output = fs_chain(str_input)
+        print(output)
         generative_response = None
         try:
             query_result = sql_query(output['result'])
@@ -271,5 +164,65 @@ def show_chat_page():
         except Exception as ex:
             generative_response = "Kindly rephrase your query, Unable to understand."
             print(Exception)
-        return generative_response
+        return query_result, generative_response, output
+    
+    def extract_column_name(result_string):
+        # Split the string by line and get the first line
+        lines = result_string.split('\n')
+        # Extract the column name from the first line (assuming it's in the "SELECT" statement)
+        if lines[0].startswith("SELECT "):
+            column_name = lines[0].replace("SELECT", "").strip().split(", ")
+            return column_name
+        else:
+            return None
+    
+    # Initialize chat history
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+
+    # Display chat messages from history on app rerun
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"],avatar=message.get("avatar")):
+            if message["role"] == "assistant" and "dataframe" in message:
+                # Display the DataFrame in the chat
+                st.dataframe(message["dataframe"])
+            else:
+                st.markdown(message["content"])
+
+    # Accept user input
+    if prompt := st.chat_input("What is up?"):
+        # Add user message to chat history
+        st.session_state.messages.append({"role": "user", "content": prompt, "avatar":"./static/user_icon.png" })
+        # Display user message in chat message container
+        with st.chat_message("user",avatar="./static/user_icon.png"):
+            st.markdown(prompt)
+        # Display assistant response in chat message container
+        with st.chat_message("assistant",avatar="./static/ai_icon.png"):
+            with st.spinner("Loading..."): 
+                message_placeholder = st.empty()
+                str_input = prompt
+                response = fs_chain1(str_input)
+                if "table" in str_input:
+                    table_data = response[0]
+                    v= response[2]
+                    v2=v['result']
+                    column_name = extract_column_name(v2)
+                    if column_name:
+                        # Assign the column name to the DataFrame
+                        df = pd.DataFrame(table_data, columns=column_name)
+                        st.dataframe(df)
+                        message = {
+                            "role": "assistant",
+                            "content": f"**Assistant**: (Table)",
+                            "dataframe": df,
+                            "avatar" :"./static/ai_icon.png",
+                        }
+                        message_placeholder.markdown("")
+                        st.session_state.messages.append(message)
+                else:
+                    generative_response1 = response[1]
+                    message_placeholder.markdown(generative_response1)
+
+                    # Add assistant response to chat history
+                    st.session_state.messages.append({"role": "assistant", "content": generative_response1, "avatar" :"./static/ai_icon.png"})
 show_chat_page()

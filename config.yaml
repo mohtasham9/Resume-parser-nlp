@@ -1,0 +1,17 @@
+credentials:
+  usernames:
+    cradmin:
+      email: Criticalriver@gmail.com
+      name: CriticalRiver
+      password: $2b$12$9VulFxoCkKX3I4kOclwuEuphfX8JHTnrNYT.Uv55SR0Db1dNnulcG # To be replaced with hashed password
+    Guest:
+      email: ashok.das@gmail.com
+      name: Guest User
+      password: $2b$12$/UxcKe.r1PW5qxXOk5Un9umDpPwwaI1DOKzbvV1qrC2jmg6UgqMya # To be replaced with hashed password
+cookie:
+  expiry_days: 30
+  key: abcdef # Must be string
+  name: crcookie
+preauthorized:
+  emails:
+  - melsby@gmail.com
